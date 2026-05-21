@@ -8,7 +8,9 @@
     "start": "next start"
   },
   "dependencies": {
+    "@ai-sdk/groq": "^3.0.39",
     "@google/generative-ai": "^0.24.1",
+    "ai": "^6.0.188",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "framer-motion": "^10.16.0",
