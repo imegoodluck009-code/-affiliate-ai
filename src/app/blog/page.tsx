@@ -37,23 +37,14 @@ export default function BlogPage() {
 
         <div style={{ display: "grid", gap: "1.5rem", maxWidth: "48rem", margin: "0 auto" }}>
           {posts.map((post, i) => (
-            <article key={i} style={{
+            <article key={i} className="blog-card" style={{
               background: "rgba(255,255,255,0.03)",
               border: "1px solid rgba(255,255,255,0.05)",
               borderRadius: "1rem",
               padding: "1.5rem",
               cursor: "pointer",
               transition: "all 0.3s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "rgba(212, 154, 46, 0.2)";
-              e.currentTarget.style.transform = "translateX(8px)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)";
-              e.currentTarget.style.transform = "translateX(0)";
-            }}
-            >
+            }}>
               <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.75rem" }}>
                 <span style={{ color: "#d49a2e", fontSize: "0.75rem", fontWeight: "600", textTransform: "uppercase" }}>
                   {post.category}
