@@ -6,11 +6,9 @@ export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json();
 
-    // Extract system message or use default
     const systemMessage = messages.find((m: any) => m.role === "system")?.content ||
       "You are an expert product advisor. Help users find the best products, compare options, and make informed purchasing decisions. Be helpful, knowledgeable, and honest.";
 
-    // Build user prompt from non-system messages
     const userMessages = messages
       .filter((m: any) => m.role !== "system")
       .map((m: any) => `${m.role}: ${m.content}`)
@@ -22,7 +20,6 @@ export async function POST(req: NextRequest) {
       model: groq("llama-3.3-70b-versatile"),
       prompt: prompt,
       maxTokens: 500,
-      temperature: 0.7,
     });
 
     return NextResponse.json({
