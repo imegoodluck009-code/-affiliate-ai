@@ -17,9 +17,11 @@ export async function POST(req: NextRequest) {
     const prompt = `${systemMessage}\n\n${userMessages}\n\nAssistant:`;
 
     const { text } = await generateText({
-      model: groq("llama-3.3-70b-versatile"),
+      model: groq("llama-3.3-70b-versatile", {
+        temperature: 0.7,
+      }),
       prompt: prompt,
-      maxTokens: 500,
+      maxOutputTokens: 500,
     });
 
     return NextResponse.json({
