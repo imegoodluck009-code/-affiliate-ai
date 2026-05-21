@@ -31,10 +31,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       message: text,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("AI Error:", error);
+    // Return the actual error for debugging
     return NextResponse.json(
-      { error: "AI service temporarily unavailable" },
+      { 
+        error: "AI service temporarily unavailable",
+        details: error.message || String(error)
+      },
       { status: 500 }
     );
   }
