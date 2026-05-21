@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { groq } from "@ai-sdk/groq";
-import { generateText } from "ai";
+import Groq from "groq-sdk";
+
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,13 +19,14 @@ export async function POST(req: NextRequest) {
 
     const prompt = `${systemMessage}\n\n${userMessages}\n\nAssistant:`;
 
-    const { text } = await generateText({
-      model: groq("llama-3.3-70b-versatile", {
-        temperature: 0.7,
-      }),
-      prompt: prompt,
-      maxOutputTokens: 500,
+    const completion = await groq.chat.completions.create({
+      messages: [{ role: "user", content: prompt }],
+      model: "llama-3.3-70b-versatile",
+      max_tokens: 500,
+      temperature: 0.7,
     });
+
+    const text = completion.choices[0]?.message?.content || "";
 
     return NextResponse.json({
       message: text,
