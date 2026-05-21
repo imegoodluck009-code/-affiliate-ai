@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export async function POST(req: NextRequest) {
   try {
+    // Initialize OpenAI client inside the handler (not at module level)
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
     const { messages } = await req.json();
 
     const completion = await openai.chat.completions.create({
