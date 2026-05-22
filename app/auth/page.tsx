@@ -33,13 +33,9 @@ export default function AuthPage() {
         setMessage(data.error)
       } else {
         setMessage(data.message)
-        
-        // FIX: Check for user instead of session, then redirect
         if (isLogin && data.user) {
-          // Small delay so user sees success message, then redirect
-          setTimeout(() => {
-            window.location.href = '/'
-          }, 500)
+          // Redirect to DASHBOARD after login, not homepage
+          window.location.href = '/dashboard'
         } else if (!isLogin) {
           setMessage('Account created! Please log in.')
           setIsLogin(true)
@@ -55,58 +51,29 @@ export default function AuthPage() {
   return (
     <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px' }}>
       <h1>{isLogin ? 'Login' : 'Sign Up'}</h1>
-
       <form onSubmit={handleSubmit}>
         {!isLogin && (
-          <input
-            type="text"
-            placeholder="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            style={{ display: 'block', width: '100%', marginBottom: '10px', padding: '10px' }}
-          />
+          <input type="text" placeholder="Name" value={name} onChange={e => setName(e.target.value)} required
+            style={{ display: 'block', width: '100%', marginBottom: '10px', padding: '10px' }} />
         )}
-
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{ display: 'block', width: '100%', marginBottom: '10px', padding: '10px' }}
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={{ display: 'block', width: '100%', marginBottom: '10px', padding: '10px' }}
-        />
-
-        <button
-          type="submit"
-          disabled={loading}
-          style={{ width: '100%', padding: '10px', cursor: 'pointer' }}
-        >
+        <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required
+          style={{ display: 'block', width: '100%', marginBottom: '10px', padding: '10px' }} />
+        <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required
+          style={{ display: 'block', width: '100%', marginBottom: '10px', padding: '10px' }} />
+        <button type="submit" disabled={loading}
+          style={{ width: '100%', padding: '10px', cursor: 'pointer' }}>
           {loading ? 'Loading...' : (isLogin ? 'Login' : 'Sign Up')}
         </button>
       </form>
-
       {message && (
         <p style={{ marginTop: '10px', color: message.includes('successful') || message.includes('created') ? 'green' : 'red' }}>
           {message}
         </p>
       )}
-
       <p style={{ marginTop: '20px', textAlign: 'center' }}>
         {isLogin ? "Don't have an account? " : "Already have an account? "}
-        <button
-          onClick={() => setIsLogin(!isLogin)}
-          style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}
-        >
+        <button onClick={() => setIsLogin(!isLogin)}
+          style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}>
           {isLogin ? 'Sign Up' : 'Login'}
         </button>
       </p>

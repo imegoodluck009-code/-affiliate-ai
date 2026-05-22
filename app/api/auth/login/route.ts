@@ -27,8 +27,9 @@ export async function POST(request: Request) {
   response.cookies.set('supabase-session', data.session.access_token, {
     httpOnly: true,
     secure: true,
-    sameSite: 'strict',
-    maxAge: 60 * 60 * 24 * 7
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 7,
+    path: '/'
   })
 
   return response
