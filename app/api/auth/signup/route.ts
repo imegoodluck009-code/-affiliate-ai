@@ -6,15 +6,14 @@ export async function POST(request: Request) {
   
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const { data, error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.admin.createUser({
     email,
     password,
-    options: {
-      data: { name }
-    }
+    email_confirm: true,
+    user_metadata: { name }
   })
 
   if (error) {
@@ -22,8 +21,7 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ 
-    message: 'Signup successful! Check your email.', 
-    session: data.session,
+    message: 'Account created successfully!', 
     user: data.user 
   })
 }
