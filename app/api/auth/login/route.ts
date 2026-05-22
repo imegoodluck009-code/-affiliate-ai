@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
@@ -18,18 +19,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 
-  // Create response with session data
   const response = NextResponse.json({ 
     message: 'Login successful', 
     user: data.user 
   })
 
-  // Set session cookie
   response.cookies.set('supabase-session', data.session.access_token, {
     httpOnly: true,
     secure: true,
     sameSite: 'strict',
-    maxAge: 60 * 60 * 24 * 7 // 7 days
+    maxAge: 60 * 60 * 24 * 7
   })
 
   return response
