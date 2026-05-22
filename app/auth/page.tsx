@@ -33,11 +33,14 @@ export default function AuthPage() {
         setMessage(data.error)
       } else {
         setMessage(data.message)
-        if (isLogin && data.session) {
-          // Redirect to homepage after successful login
-          window.location.href = '/'
+        
+        // FIX: Check for user instead of session, then redirect
+        if (isLogin && data.user) {
+          // Small delay so user sees success message, then redirect
+          setTimeout(() => {
+            window.location.href = '/'
+          }, 500)
         } else if (!isLogin) {
-          // After signup, switch to login mode
           setMessage('Account created! Please log in.')
           setIsLogin(true)
         }
