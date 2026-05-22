@@ -11,12 +11,13 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: 'Hello! I am your Affiliate AI assistant. How can I help you today?'
+      content: 'Hello! I am your Affiliate AI assistant. I can help you:\\n\\n• Write blog posts\\n• Create product descriptions\\n• Generate marketing content\\n\\nJust ask me anything, or use:\\n/blog [topic] - to generate a blog post\\n/product [name] - to generate a product description'
     }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [savedMessage, setSavedMessage] = useState('')
+  const messagesEndRef = useRef<<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -34,6 +35,7 @@ export default function ChatPage() {
     setInput('')
     setMessages(prev => [...prev, { role: 'user', content: userMessage }])
     setLoading(true)
+    setSavedMessage('')
 
     try {
       const res = await fetch('/api/chat', {
@@ -65,6 +67,49 @@ export default function ChatPage() {
     }
   }
 
+  const saveAsBlog = async (content: string) => {
+    try {
+      // Extract title from first line or generate one
+      const title = content.split('\\n')[0].slice(0, 100) || 'AI Generated Post'
+      const body = content
+
+      const res = await fetch('/api/blog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content: body })
+      })
+
+      if (res.ok) {
+        setSavedMessage('✅ Saved to Blog Posts!')
+        setTimeout(() => setSavedMessage(''), 3000)
+      }
+    } catch (err) {
+      setSavedMessage('❌ Failed to save')
+    }
+  }
+
+  const saveAsProduct = async (content: string) => {
+    try {
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: content.split('\\n')[0].slice(0, 100) || 'New Product',
+          description: content,
+          price: '$0.00',
+          affiliate_link: '#'
+        })
+      })
+
+      if (res.ok) {
+        setSavedMessage('✅ Saved to Products!')
+        setTimeout(() => setSavedMessage(''), 3000)
+      }
+    } catch (err) {
+      setSavedMessage('❌ Failed to save')
+    }
+  }
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -74,6 +119,7 @@ export default function ChatPage() {
       display: 'flex',
       flexDirection: 'column'
     }}>
+      {/* Header */}
       <nav style={{
         background: 'rgba(15, 15, 35, 0.9)',
         backdropFilter: 'blur(20px)',
@@ -91,15 +137,28 @@ export default function ChatPage() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontWeight: 'bold', color: 'white'
           }}>A</div>
-          <h1 style={{ margin: 0, fontSize: '20px', color: '#fff' }}>Affiliate AI - Chat</h1>
+          <h1 style={{ margin: 0, fontSize: '20px', color: '#fff' }}>AI Assistant</h1>
         </div>
-        <a href="/dashboard" style={{
-          color: '#a0a0b0',
-          textDecoration: 'none',
-          fontSize: '14px'
-        }}>Back to Dashboard</a>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          {savedMessage && (
+            <span style={{
+              padding: '8px 16px',
+              background: 'rgba(16, 185, 129, 0.1)',
+              color: '#10b981',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: '600'
+            }}>{savedMessage}</span>
+          )}
+          <a href="/dashboard" style={{
+            color: '#a0a0b0',
+            textDecoration: 'none',
+            fontSize: '14px'
+          }}>← Dashboard</a>
+        </div>
       </nav>
 
+      {/* Chat Messages */}
       <div style={{
         flex: 1,
         overflowY: 'auto',
@@ -112,21 +171,64 @@ export default function ChatPage() {
         gap: '20px'
       }}>
         {messages.map((msg, i) => (
-          <div key={i} style={{
-            alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-            maxWidth: '80%',
-            padding: '16px 20px',
-            borderRadius: msg.role === 'user' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
-            background: msg.role === 'user'
-              ? 'linear-gradient(135deg, #667eea, #764ba2)'
-              : 'rgba(255,255,255,0.05)',
-            border: msg.role === 'user' ? 'none' : '1px solid rgba(255,255,255,0.1)',
-            color: 'white',
-            fontSize: '15px',
-            lineHeight: 1.6,
-            whiteSpace: 'pre-wrap'
-          }}>
-            {msg.content}
+          <div key={i}>
+            <div style={{
+              alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
+              maxWidth: '80%',
+              padding: '16px 20px',
+              borderRadius: msg.role === 'user' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
+              background: msg.role === 'user'
+                ? 'linear-gradient(135deg, #667eea, #764ba2)'
+                : 'rgba(255,255,255,0.05)',
+              border: msg.role === 'user' ? 'none' : '1px solid rgba(255,255,255,0.1)',
+              color: 'white',
+              fontSize: '15px',
+              lineHeight: 1.6,
+              whiteSpace: 'pre-wrap',
+              marginBottom: msg.role === 'assistant' ? '12px' : '0'
+            }}>
+              {msg.content}
+            </div>
+            
+            {/* Save buttons for AI responses */}
+            {msg.role === 'assistant' && i > 0 && (
+              <div style={{
+                display: 'flex',
+                gap: '10px',
+                marginLeft: '10px'
+              }}>
+                <button
+                  onClick={() => saveAsBlog(msg.content)}
+                  style={{
+                    padding: '6px 14px',
+                    background: 'rgba(16, 185, 129, 0.1)',
+                    color: '#10b981',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: '600'
+                  }}
+                >
+                  💾 Save as Blog
+                </button>
+                <button
+                  onClick={() => saveAsProduct(msg.content)}
+                  style={{
+                    padding: '6px 14px',
+                    background: 'rgba(245, 158, 11, 0.1)',
+                    color: '#f59e0b',
+                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: '600'
+                  }}
+                >
+                  💾 Save as Product
+                </button>
+              </div>
+            )}
           </div>
         ))}
         {loading && (
@@ -144,6 +246,7 @@ export default function ChatPage() {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Input Area */}
       <div style={{
         borderTop: '1px solid rgba(255,255,255,0.1)',
         padding: '20px 32px',
@@ -159,7 +262,7 @@ export default function ChatPage() {
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Ask me anything about affiliate marketing..."
+            placeholder="Ask me anything... (try: /blog write about fitness products)"
             disabled={loading}
             style={{
               flex: 1,
