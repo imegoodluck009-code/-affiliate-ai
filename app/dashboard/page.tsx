@@ -146,7 +146,7 @@ export default function Dashboard() {
         {/* Stats Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gridTemplateColumns: 'repeat(2, 1fr)',
           gap: '20px',
           marginBottom: '32px'
         }}>
@@ -206,7 +206,7 @@ export default function Dashboard() {
         </h3>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gridTemplateColumns: 'repeat(1, 1fr)',
           gap: '20px'
         }}>
           {[
