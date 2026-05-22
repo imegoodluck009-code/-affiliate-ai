@@ -11,7 +11,6 @@ export default function Dashboard() {
       try {
         const res = await fetch('/api/auth/me')
         const data = await res.json()
-        
         if (!data.user) {
           window.location.href = '/auth'
         } else {
@@ -30,37 +29,95 @@ export default function Dashboard() {
     window.location.href = '/auth'
   }
 
-  if (loading) return <div style={{ padding: '40px' }}>Loading...</div>
+  if (loading) return (
+    <div style={{
+      minHeight: '100vh',
+      background: '#0f0f23',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: '#a0a0b0'
+    }}>
+      Loading...
+    </div>
+  )
   if (!user) return null
 
   return (
-    <div style={{ 
+    <div style={{
       minHeight: '100vh',
-      background: '#f5f5f5',
-      fontFamily: 'system-ui, sans-serif'
+      background: '#0f0f23',
+      color: '#e0e0e0',
+      fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
       {/* Navbar */}
       <nav style={{
-        background: 'white',
-        padding: '20px 40px',
+        background: 'rgba(15, 15, 35, 0.8)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        padding: '16px 32px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+        position: 'sticky',
+        top: 0,
+        zIndex: 100
       }}>
-        <h2 style={{ margin: 0, color: '#667eea' }}>Affiliate AI</h2>
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-          <span style={{ color: '#666' }}>{user.email}</span>
-          <button 
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '36px',
+            height: '36px',
+            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 'bold',
+            color: 'white',
+            fontSize: '18px'
+          }}>
+            A
+          </div>
+          <h1 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#fff' }}>
+            Affiliate AI
+          </h1>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px 16px',
+            background: 'rgba(255,255,255,0.05)',
+            borderRadius: '20px',
+            border: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <div style={{
+              width: '8px',
+              height: '8px',
+              background: '#4ade80',
+              borderRadius: '50%'
+            }} />
+            <span style={{ fontSize: '14px', color: '#a0a0b0' }}>{user.email}</span>
+          </div>
+          <button
             onClick={handleLogout}
             style={{
-              padding: '10px 20px',
-              background: '#667eea',
-              color: 'white',
-              border: 'none',
+              padding: '10px 24px',
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#ef4444',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
               borderRadius: '8px',
               cursor: 'pointer',
-              fontWeight: 'bold'
+              fontWeight: '600',
+              fontSize: '14px',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'
             }}
           >
             Logout
@@ -69,69 +126,151 @@ export default function Dashboard() {
       </nav>
 
       {/* Main Content */}
-      <main style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
-        <h1 style={{ marginBottom: '30px' }}>Dashboard</h1>
-        
+      <main style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto' }}>
+        {/* Welcome Section */}
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1))',
+          border: '1px solid rgba(102, 126, 234, 0.3)',
+          borderRadius: '20px',
+          padding: '32px',
+          marginBottom: '32px'
+        }}>
+          <h2 style={{ margin: '0 0 8px 0', fontSize: '28px', color: '#fff' }}>
+            Welcome back, {user.user_metadata?.name || user.email.split('@')[0]}!
+          </h2>
+          <p style={{ margin: 0, color: '#a0a0b0', fontSize: '16px' }}>
+            Here's what's happening with your affiliate marketing today.
+          </p>
+        </div>
+
+        {/* Stats Grid */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '20px',
+          marginBottom: '32px'
+        }}>
+          {[
+            { title: 'AI Chat Sessions', value: '24', change: '+12%', color: '#667eea' },
+            { title: 'Blog Posts', value: '8', change: '+3 this week', color: '#10b981' },
+            { title: 'Affiliate Products', value: '15', change: '+5 new', color: '#f59e0b' },
+            { title: 'Total Earnings', value: '$0.00', change: 'Get started', color: '#ef4444' }
+          ].map((stat, i) => (
+            <div key={i} style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '16px',
+              padding: '24px',
+              transition: 'all 0.3s',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = stat.color + '40'
+              e.currentTarget.style.transform = 'translateY(-4px)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+              e.currentTarget.style.transform = 'translateY(0)'
+            }}
+            >
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'start',
+                marginBottom: '16px'
+              }}>
+                <h3 style={{ margin: 0, fontSize: '14px', color: '#a0a0b0', fontWeight: '500' }}>
+                  {stat.title}
+                </h3>
+                <div style={{
+                  width: '8px',
+                  height: '8px',
+                  background: stat.color,
+                  borderRadius: '50%',
+                  boxShadow: `0 0 12px ${stat.color}60`
+                }} />
+              </div>
+              <div style={{ fontSize: '32px', fontWeight: '700', color: '#fff', marginBottom: '8px' }}>
+                {stat.value}
+              </div>
+              <div style={{ fontSize: '13px', color: stat.color, fontWeight: '600' }}>
+                {stat.change}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Feature Cards */}
+        <h3 style={{ fontSize: '20px', color: '#fff', marginBottom: '20px', fontWeight: '600' }}>
+          Quick Actions
+        </h3>
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
           gap: '20px'
         }}>
-          {/* Stats Cards */}
-          <div style={{
-            background: 'white',
-            padding: '30px',
-            borderRadius: '15px',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-          }}>
-            <h3 style={{ color: '#667eea', marginBottom: '10px' }}>AI Chat</h3>
-            <p style={{ color: '#666' }}>Talk to your AI assistant</p>
-            <a href="/" style={{
-              display: 'inline-block',
-              marginTop: '15px',
+          {[
+            { 
+              title: 'AI Assistant', 
+              desc: 'Chat with your AI to generate content and get recommendations',
+              icon: '🤖',
               color: '#667eea',
+              href: '/'
+            },
+            { 
+              title: 'Blog Posts', 
+              desc: 'Create and manage AI-generated blog content',
+              icon: '📝',
+              color: '#10b981',
+              href: '#'
+            },
+            { 
+              title: 'Products', 
+              desc: 'Track and manage your affiliate products',
+              icon: '🛍️',
+              color: '#f59e0b',
+              href: '#'
+            }
+          ].map((feature, i) => (
+            <a key={i} href={feature.href} style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '16px',
+              padding: '28px',
               textDecoration: 'none',
-              fontWeight: 'bold'
-            }}>
-              Open Chat →
+              color: 'inherit',
+              display: 'block',
+              transition: 'all 0.3s'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = feature.color + '40'
+              e.currentTarget.style.background = feature.color + '08'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+              e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
+            }}
+            >
+              <div style={{ fontSize: '36px', marginBottom: '16px' }}>{feature.icon}</div>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '18px', color: '#fff', fontWeight: '600' }}>
+                {feature.title}
+              </h4>
+              <p style={{ margin: 0, fontSize: '14px', color: '#a0a0b0', lineHeight: 1.5 }}>
+                {feature.desc}
+              </p>
+              <div style={{
+                marginTop: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                color: feature.color,
+                fontSize: '14px',
+                fontWeight: '600'
+              }}>
+                Get Started →
+              </div>
             </a>
-          </div>
-
-          <div style={{
-            background: 'white',
-            padding: '30px',
-            borderRadius: '15px',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-          }}>
-            <h3 style={{ color: '#667eea', marginBottom: '10px' }}>Blog Posts</h3>
-            <p style={{ color: '#666' }}>Manage your content</p>
-            <span style={{
-              display: 'inline-block',
-              marginTop: '15px',
-              color: '#999',
-              fontWeight: 'bold'
-            }}>
-              Coming Soon
-            </span>
-          </div>
-
-          <div style={{
-            background: 'white',
-            padding: '30px',
-            borderRadius: '15px',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-          }}>
-            <h3 style={{ color: '#667eea', marginBottom: '10px' }}>Products</h3>
-            <p style={{ color: '#666' }}>Track affiliate products</p>
-            <span style={{
-              display: 'inline-block',
-              marginTop: '15px',
-              color: '#999',
-              fontWeight: 'bold'
-            }}>
-              Coming Soon
-            </span>
-          </div>
+          ))}
         </div>
       </main>
     </div>
