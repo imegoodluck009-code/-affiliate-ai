@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -18,9 +18,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 
-  return NextResponse.json({ 
+  // Create response with session data
+  const response = NextResponse.json({ 
     message: 'Login successful', 
-    session: data.session,
     user: data.user 
   })
+
+  // Set session cookie
+  response.cookies.set('supabase-session', data.session.access_token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'strict',
+    maxAge: 60 * 60 * 24 * 7 // 7 days
+  })
+
+  return response
 }

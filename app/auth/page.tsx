@@ -16,8 +16,8 @@ export default function AuthPage() {
     setMessage('')
 
     const endpoint = isLogin ? '/api/auth/login' : '/api/auth/signup'
-    const body = isLogin 
-      ? { email, password } 
+    const body = isLogin
+      ? { email, password }
       : { email, password, name }
 
     try {
@@ -34,8 +34,12 @@ export default function AuthPage() {
       } else {
         setMessage(data.message)
         if (isLogin && data.session) {
-          localStorage.setItem('supabaseSession', JSON.stringify(data.session))
-          window.location.href = '/dashboard'
+          // Redirect to homepage after successful login
+          window.location.href = '/'
+        } else if (!isLogin) {
+          // After signup, switch to login mode
+          setMessage('Account created! Please log in.')
+          setIsLogin(true)
         }
       }
     } catch (err) {
@@ -48,7 +52,7 @@ export default function AuthPage() {
   return (
     <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px' }}>
       <h1>{isLogin ? 'Login' : 'Sign Up'}</h1>
-      
+
       <form onSubmit={handleSubmit}>
         {!isLogin && (
           <input
@@ -60,7 +64,7 @@ export default function AuthPage() {
             style={{ display: 'block', width: '100%', marginBottom: '10px', padding: '10px' }}
           />
         )}
-        
+
         <input
           type="email"
           placeholder="Email"
@@ -69,7 +73,7 @@ export default function AuthPage() {
           required
           style={{ display: 'block', width: '100%', marginBottom: '10px', padding: '10px' }}
         />
-        
+
         <input
           type="password"
           placeholder="Password"
@@ -78,9 +82,9 @@ export default function AuthPage() {
           required
           style={{ display: 'block', width: '100%', marginBottom: '10px', padding: '10px' }}
         />
-        
-        <button 
-          type="submit" 
+
+        <button
+          type="submit"
           disabled={loading}
           style={{ width: '100%', padding: '10px', cursor: 'pointer' }}
         >
@@ -89,14 +93,14 @@ export default function AuthPage() {
       </form>
 
       {message && (
-        <p style={{ marginTop: '10px', color: message.includes('successful') ? 'green' : 'red' }}>
+        <p style={{ marginTop: '10px', color: message.includes('successful') || message.includes('created') ? 'green' : 'red' }}>
           {message}
         </p>
       )}
 
       <p style={{ marginTop: '20px', textAlign: 'center' }}>
         {isLogin ? "Don't have an account? " : "Already have an account? "}
-        <button 
+        <button
           onClick={() => setIsLogin(!isLogin)}
           style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}
         >
