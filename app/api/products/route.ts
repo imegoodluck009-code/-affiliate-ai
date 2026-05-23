@@ -21,8 +21,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { name, description, price, affiliate_link } = await request.json()
-  
+  const { name, description, price, affiliate_link, image_url } = await request.json()
+
   const token = cookies().get('supabase-session')?.value
   if (!token) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase
     .from('affiliate_products')
-    .insert([{ name, description, price, affiliate_link, user_id: user.id }])
+    .insert([{ name, description, price, affiliate_link, image_url, user_id: user.id }])
     .select()
 
   if (error) {
@@ -46,15 +46,15 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  const { id, name, description, price, affiliate_link } = await request.json()
-  
+  const { id, name, description, price, affiliate_link, image_url } = await request.json()
+
   if (!id) {
     return NextResponse.json({ error: 'ID required' }, { status: 400 })
   }
 
   const { data, error } = await supabase
     .from('affiliate_products')
-    .update({ name, description, price, affiliate_link })
+    .update({ name, description, price, affiliate_link, image_url })
     .eq('id', id)
     .select()
 

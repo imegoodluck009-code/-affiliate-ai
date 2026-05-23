@@ -7,7 +7,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// GET - Fetch all blog posts
 export async function GET() {
   const { data, error } = await supabase
     .from('blog_posts')
@@ -21,10 +20,9 @@ export async function GET() {
   return NextResponse.json({ posts: data })
 }
 
-// POST - Create new blog post
 export async function POST(request: Request) {
-  const { title, content } = await request.json()
-  
+  const { title, content, image_url } = await request.json()
+
   const token = cookies().get('supabase-session')?.value
   if (!token) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
@@ -37,7 +35,7 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase
     .from('blog_posts')
-    .insert([{ title, content, user_id: user.id }])
+    .insert([{ title, content, image_url, user_id: user.id }])
     .select()
 
   if (error) {
@@ -47,17 +45,16 @@ export async function POST(request: Request) {
   return NextResponse.json({ post: data[0] })
 }
 
-// PUT - Update blog post
 export async function PUT(request: Request) {
-  const { id, title, content } = await request.json()
-  
+  const { id, title, content, image_url } = await request.json()
+
   if (!id) {
     return NextResponse.json({ error: 'ID required' }, { status: 400 })
   }
 
   const { data, error } = await supabase
     .from('blog_posts')
-    .update({ title, content })
+    .update({ title, content, image_url })
     .eq('id', id)
     .select()
 
@@ -68,7 +65,6 @@ export async function PUT(request: Request) {
   return NextResponse.json({ post: data[0] })
 }
 
-// DELETE - Delete blog post
 export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
