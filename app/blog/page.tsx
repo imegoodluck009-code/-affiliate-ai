@@ -13,6 +13,7 @@ export default function BlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
   const [newPost, setNewPost] = useState({ title: '', content: '' })
+  const [editPost, setEditPost] = useState<BlogPost | null>(null)
   const [showForm, setShowForm] = useState(false)
 
   useEffect(() => {
@@ -48,6 +49,29 @@ export default function BlogPage() {
     }
   }
 
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editPost) return
+
+    try {
+      const res = await fetch('/api/blog', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editPost.id,
+          title: editPost.title,
+          content: editPost.content
+        })
+      })
+      if (res.ok) {
+        setEditPost(null)
+        fetchPosts()
+      }
+    } catch (err) {
+      console.error('Failed to update post:', err)
+    }
+  }
+
   const handleDelete = async (id: string) => {
     try {
       await fetch(`/api/blog?id=${id}`, { method: 'DELETE' })
@@ -75,7 +99,6 @@ export default function BlogPage() {
       color: '#e0e0e0',
       fontFamily: 'system-ui, sans-serif'
     }}>
-      {/* Header */}
       <nav style={{
         background: 'rgba(15, 15, 35, 0.9)',
         backdropFilter: 'blur(20px)',
@@ -103,7 +126,6 @@ export default function BlogPage() {
       </nav>
 
       <main style={{ padding: '32px', maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Actions */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -112,7 +134,7 @@ export default function BlogPage() {
         }}>
           <h2 style={{ margin: 0, fontSize: '24px' }}>Your Blog Posts</h2>
           <button
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => { setShowForm(!showForm); setEditPost(null); }}
             style={{
               padding: '12px 24px',
               background: 'linear-gradient(135deg, #667eea, #764ba2)',
@@ -185,6 +207,75 @@ export default function BlogPage() {
           </form>
         )}
 
+        {/* Edit Post Form */}
+        {editPost && (
+          <form onSubmit={handleUpdate} style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(102, 126, 234, 0.3)',
+            borderRadius: '16px',
+            padding: '24px',
+            marginBottom: '32px'
+          }}>
+            <h3 style={{ margin: '0 0 16px 0', color: '#667eea' }}>Edit Post</h3>
+            <input
+              type="text"
+              value={editPost.title}
+              onChange={e => setEditPost({...editPost, title: e.target.value})}
+              required
+              style={{
+                width: '100%',
+                padding: '12px',
+                marginBottom: '16px',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '8px',
+                color: 'white',
+                fontSize: '16px'
+              }}
+            />
+            <textarea
+              value={editPost.content}
+              onChange={e => setEditPost({...editPost, content: e.target.value})}
+              required
+              rows={6}
+              style={{
+                width: '100%',
+                padding: '12px',
+                marginBottom: '16px',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '8px',
+                color: 'white',
+                fontSize: '16px',
+                resize: 'vertical'
+              }}
+            />
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button type="submit" style={{
+                padding: '12px 24px',
+                background: '#667eea',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: '600'
+              }}>
+                Update Post
+              </button>
+              <button type="button" onClick={() => setEditPost(null)} style={{
+                padding: '12px 24px',
+                background: 'rgba(255,255,255,0.1)',
+                color: '#a0a0b0',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}>
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+
         {/* Posts List */}
         {posts.length === 0 ? (
           <div style={{
@@ -194,7 +285,7 @@ export default function BlogPage() {
           }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>📝</div>
             <h3 style={{ color: '#fff', marginBottom: '8px' }}>No blog posts yet</h3>
-            <p>Click "New Post" to create your first blog post, or use the AI Assistant to generate one!</p>
+            <p>Use the AI Assistant to generate one!</p>
           </div>
         ) : (
           <div style={{
@@ -232,20 +323,36 @@ export default function BlogPage() {
                   <span style={{ color: '#667eea', fontSize: '12px' }}>
                     {new Date(post.created_at).toLocaleDateString()}
                   </span>
-                  <button
-                    onClick={() => handleDelete(post.id)}
-                    style={{
-                      padding: '6px 12px',
-                      background: 'rgba(239, 68, 68, 0.1)',
-                      color: '#ef4444',
-                      border: '1px solid rgba(239, 68, 68, 0.3)',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '12px'
-                    }}
-                  >
-                    Delete
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={() => setEditPost(post)}
+                      style={{
+                        padding: '6px 12px',
+                        background: 'rgba(102, 126, 234, 0.1)',
+                        color: '#667eea',
+                        border: '1px solid rgba(102, 126, 234, 0.3)',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '12px'
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(post.id)}
+                      style={{
+                        padding: '6px 12px',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        color: '#ef4444',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '12px'
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
