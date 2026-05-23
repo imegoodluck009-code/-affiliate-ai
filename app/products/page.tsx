@@ -14,281 +14,170 @@ interface Product {
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const [newProduct, setNewProduct] = useState({ name: '', description: '', price: '', affiliate_link: '' })
-  const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState<<Partial<Product>>({})
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     fetchProducts()
   }, [])
 
-  const fetchProducts = async () => {
+  async function fetchProducts() {
     try {
       const res = await fetch('/api/products')
       const data = await res.json()
       setProducts(data.products || [])
-    } catch (err) {
-      console.error('Failed to fetch products:', err)
+    } catch (error) {
+      console.error('Failed to fetch products:', error)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  function startEdit(product: Product) {
+    setEditingId(product.id)
+    setEditForm({ ...product })
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setEditForm({})
+  }
+
+  async function saveEdit(id: string) {
+    setSaving(true)
     try {
-      const res = await fetch('/api/products', {
-        method: 'POST',
+      const res = await fetch(`/api/products/${id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newProduct)
+        body: JSON.stringify(editForm),
       })
       if (res.ok) {
-        setNewProduct({ name: '', description: '', price: '', affiliate_link: '' })
-        setShowForm(false)
-        fetchProducts()
+        await fetchProducts()
+        setEditingId(null)
+        setEditForm({})
+      } else {
+        console.error('Failed to update product')
       }
-    } catch (err) {
-      console.error('Failed to create product:', err)
+    } catch (error) {
+      console.error('Error updating product:', error)
+    } finally {
+      setSaving(false)
     }
   }
 
-  const handleDelete = async (id: string) => {
-    try {
-      await fetch(`/api/products?id=${id}`, { method: 'DELETE' })
-      fetchProducts()
-    } catch (err) {
-      console.error('Failed to delete product:', err)
-    }
+  function handleEditChange(field: keyof Product, value: string) {
+    setEditForm(prev => ({ ...prev, [field]: value }))
   }
 
-  if (loading) return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#0f0f23',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      color: '#a0a0b0'
-    }}>Loading...</div>
-  )
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#0f0f23',
-      color: '#e0e0e0',
-      fontFamily: 'system-ui, sans-serif'
-    }}>
-      <nav style={{
-        background: 'rgba(15, 15, 35, 0.9)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255,255,255,0.1)',
-        padding: '16px 32px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '36px', height: '36px',
-            background: 'linear-gradient(135deg, #667eea, #764ba2)',
-            borderRadius: '10px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 'bold', color: 'white'
-          }}>A</div>
-          <h1 style={{ margin: 0, fontSize: '20px', color: '#fff' }}>Products</h1>
-        </div>
-        <a href="/dashboard" style={{
-          color: '#a0a0b0',
-          textDecoration: 'none',
-          fontSize: '14px'
-        }}>← Back to Dashboard</a>
-      </nav>
-
-      <main style={{ padding: '32px', maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '32px'
-        }}>
-          <h2 style={{ margin: 0, fontSize: '24px' }}>Your Affiliate Products</h2>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            style={{
-              padding: '12px 24px',
-              background: 'linear-gradient(135deg, #667eea, #764ba2)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: '600'
-            }}
-          >
-            {showForm ? 'Cancel' : '+ Add Product'}
-          </button>
-        </div>
-
-        {showForm && (
-          <form onSubmit={handleSubmit} style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '16px',
-            padding: '24px',
-            marginBottom: '32px'
-          }}>
-            <input
-              type="text"
-              placeholder="Product Name"
-              value={newProduct.name}
-              onChange={e => setNewProduct({...newProduct, name: e.target.value})}
-              required
-              style={{
-                width: '100%',
-                padding: '12px',
-                marginBottom: '12px',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '8px',
-                color: 'white',
-                fontSize: '16px'
-              }}
-            />
-            <textarea
-              placeholder="Product Description"
-              value={newProduct.description}
-              onChange={e => setNewProduct({...newProduct, description: e.target.value})}
-              required
-              rows={3}
-              style={{
-                width: '100%',
-                padding: '12px',
-                marginBottom: '12px',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '8px',
-                color: 'white',
-                fontSize: '16px'
-              }}
-            />
-            <input
-              type="text"
-              placeholder="Price (e.g. $29.99)"
-              value={newProduct.price}
-              onChange={e => setNewProduct({...newProduct, price: e.target.value})}
-              required
-              style={{
-                width: '100%',
-                padding: '12px',
-                marginBottom: '12px',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '8px',
-                color: 'white',
-                fontSize: '16px'
-              }}
-            />
-            <input
-              type="url"
-              placeholder="Affiliate Link (URL)"
-              value={newProduct.affiliate_link}
-              onChange={e => setNewProduct({...newProduct, affiliate_link: e.target.value})}
-              required
-              style={{
-                width: '100%',
-                padding: '12px',
-                marginBottom: '16px',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '8px',
-                color: 'white',
-                fontSize: '16px'
-              }}
-            />
-            <button type="submit" style={{
-              padding: '12px 24px',
-              background: '#f59e0b',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: '600'
-            }}>
-              Save Product
-            </button>
-          </form>
-        )}
-
-        {products.length === 0 ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '60px 20px',
-            color: '#a0a0b0'
-          }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🛍️</div>
-            <h3 style={{ color: '#fff', marginBottom: '8px' }}>No products yet</h3>
-            <p>Add your first affiliate product or use the AI Assistant to generate descriptions!</p>
-          </div>
-        ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '20px'
-          }}>
-            {products.map(product => (
-              <div key={product.id} style={{
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '16px',
-                padding: '24px'
-              }}>
-                <h3 style={{ margin: '0 0 8px 0', color: '#fff', fontSize: '18px' }}>
-                  {product.name}
-                </h3>
-                <p style={{ color: '#a0a0b0', fontSize: '14px', marginBottom: '12px' }}>
-                  {product.description}
-                </p>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '12px'
-                }}>
-                  <span style={{ color: '#f59e0b', fontSize: '20px', fontWeight: 'bold' }}>
-                    {product.price}
-                  </span>
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Products</h1>
+        
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {products.map((product) => (
+            <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+              {editingId === product.id ? (
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <input
+                      type="text"
+                      value={editForm.name || ''}
+                      onChange={(e) => handleEditChange('name', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea
+                      value={editForm.description || ''}
+                      onChange={(e) => handleEditChange('description', e.target.value)}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                    <input
+                      type="text"
+                      value={editForm.price || ''}
+                      onChange={(e) => handleEditChange('price', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Affiliate Link</label>
+                    <input
+                      type="url"
+                      value={editForm.affiliate_link || ''}
+                      onChange={(e) => handleEditChange('affiliate_link', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      onClick={() => saveEdit(product.id)}
+                      disabled={saving}
+                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                    >
+                      {saving ? 'Saving...' : 'Save'}
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
-                <a href={product.affiliate_link} target="_blank" rel="noopener noreferrer" style={{
-                  display: 'block',
-                  padding: '10px',
-                  background: 'rgba(102, 126, 234, 0.1)',
-                  color: '#667eea',
-                  textDecoration: 'none',
-                  borderRadius: '8px',
-                  textAlign: 'center',
-                  fontWeight: '600',
-                  marginBottom: '12px'
-                }}>
-                  View Product →
-                </a>
-                <button
-                  onClick={() => handleDelete(product.id)}
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    background: 'rgba(239, 68, 68, 0.1)',
-                    color: '#ef4444',
-                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '12px'
-                  }}
-                >
-                  Delete
-                </button>
-              </div>
-            ))}
+              ) : (
+                <div className="p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2">{product.name}</h2>
+                  <p className="text-gray-600 mb-4 line-clamp-3">{product.description}</p>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-2xl font-bold text-blue-600">{product.price}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <a
+                      href={product.affiliate_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 bg-green-600 text-white text-center py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
+                    >
+                      Buy Now
+                    </a>
+                    <button
+                      onClick={() => startEdit(product)}
+                      className="bg-blue-100 text-blue-700 py-2 px-4 rounded-md hover:bg-blue-200 transition-colors"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-4">
+                    Added {new Date(product.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {products.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">No products found.</p>
           </div>
         )}
-      </main>
+      </div>
     </div>
   )
 }
