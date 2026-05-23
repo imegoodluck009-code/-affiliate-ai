@@ -7,6 +7,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+// GET - Fetch all blog posts
 export async function GET() {
   const { data, error } = await supabase
     .from('blog_posts')
@@ -20,6 +21,7 @@ export async function GET() {
   return NextResponse.json({ posts: data })
 }
 
+// POST - Create new blog post
 export async function POST(request: Request) {
   const { title, content } = await request.json()
   
@@ -45,6 +47,28 @@ export async function POST(request: Request) {
   return NextResponse.json({ post: data[0] })
 }
 
+// PUT - Update blog post
+export async function PUT(request: Request) {
+  const { id, title, content } = await request.json()
+  
+  if (!id) {
+    return NextResponse.json({ error: 'ID required' }, { status: 400 })
+  }
+
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .update({ title, content })
+    .eq('id', id)
+    .select()
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ post: data[0] })
+}
+
+// DELETE - Delete blog post
 export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')

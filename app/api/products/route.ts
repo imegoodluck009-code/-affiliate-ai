@@ -45,6 +45,26 @@ export async function POST(request: Request) {
   return NextResponse.json({ product: data[0] })
 }
 
+export async function PUT(request: Request) {
+  const { id, name, description, price, affiliate_link } = await request.json()
+  
+  if (!id) {
+    return NextResponse.json({ error: 'ID required' }, { status: 400 })
+  }
+
+  const { data, error } = await supabase
+    .from('affiliate_products')
+    .update({ name, description, price, affiliate_link })
+    .eq('id', id)
+    .select()
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ product: data[0] })
+}
+
 export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
