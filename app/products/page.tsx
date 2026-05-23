@@ -18,7 +18,6 @@ export default function ProductsPage() {
   const [editForm, setEditForm] = useState<<Partial<Product>>({})
   const [saving, setSaving] = useState(false)
   
-  // Create form states
   const [showForm, setShowForm] = useState(false)
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -44,7 +43,6 @@ export default function ProductsPage() {
     }
   }
 
-  // CREATE
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setCreating(true)
@@ -66,7 +64,6 @@ export default function ProductsPage() {
     }
   }
 
-  // EDIT
   function startEdit(product: Product) {
     setEditingId(product.id)
     setEditForm({ ...product })
@@ -103,7 +100,6 @@ export default function ProductsPage() {
     setEditForm(prev => ({ ...prev, [field]: value }))
   }
 
-  // DELETE
   async function handleDelete(id: string) {
     if (!confirm('Are you sure you want to delete this product?')) return
     try {
@@ -118,17 +114,17 @@ export default function ProductsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-gray-900 text-gray-100 py-8 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Products</h1>
+          <h1 className="text-3xl font-bold text-white">Products</h1>
           <button
             onClick={() => setShowForm(!showForm)}
             className="btn-primary"
@@ -140,10 +136,10 @@ export default function ProductsPage() {
         {/* Create Form */}
         {showForm && (
           <div className="card p-6 mb-8">
-            <h2 className="text-xl font-semibold mb-4 text-gray-900">Add New Product</h2>
+            <h2 className="text-xl font-semibold mb-4 text-white">Add New Product</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Name</label>
                 <input
                   type="text"
                   required
@@ -154,7 +150,7 @@ export default function ProductsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
                 <textarea
                   required
                   value={newProduct.description}
@@ -165,7 +161,7 @@ export default function ProductsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Price</label>
                 <input
                   type="text"
                   required
@@ -176,7 +172,7 @@ export default function ProductsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Affiliate Link</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Affiliate Link</label>
                 <input
                   type="url"
                   required
@@ -213,7 +209,7 @@ export default function ProductsPage() {
               {editingId === product.id ? (
                 <div className="p-6 space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Name</label>
                     <input
                       type="text"
                       value={editForm.name || ''}
@@ -222,7 +218,7 @@ export default function ProductsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
                     <textarea
                       value={editForm.description || ''}
                       onChange={(e) => handleEditChange('description', e.target.value)}
@@ -231,7 +227,7 @@ export default function ProductsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Price</label>
                     <input
                       type="text"
                       value={editForm.price || ''}
@@ -240,7 +236,7 @@ export default function ProductsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Affiliate Link</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Affiliate Link</label>
                     <input
                       type="url"
                       value={editForm.affiliate_link || ''}
@@ -266,10 +262,10 @@ export default function ProductsPage() {
                 </div>
               ) : (
                 <div className="p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">{product.name}</h2>
-                  <p className="text-gray-600 mb-4 line-clamp-3">{product.description}</p>
+                  <h2 className="text-xl font-semibold text-white mb-2">{product.name}</h2>
+                  <p className="text-gray-300 mb-4 line-clamp-3">{product.description}</p>
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-2xl font-bold text-blue-600">{product.price}</span>
+                    <span className="text-2xl font-bold text-blue-400">{product.price}</span>
                   </div>
                   <div className="flex gap-2 flex-wrap">
                     <a
@@ -293,7 +289,7 @@ export default function ProductsPage() {
                       Delete
                     </button>
                   </div>
-                  <p className="text-xs text-gray-400 mt-4">
+                  <p className="text-xs text-gray-500 mt-4">
                     Added {new Date(product.created_at).toLocaleDateString()}
                   </p>
                 </div>
@@ -304,7 +300,7 @@ export default function ProductsPage() {
 
         {products.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No products found. Add your first product!</p>
+            <p className="text-gray-400 text-lg">No products found. Add your first product!</p>
           </div>
         )}
       </div>
