@@ -222,14 +222,14 @@ export default function Dashboard() {
               desc: 'Create and manage AI-generated blog content',
               icon: '📝',
               color: '#10b981',
-              href: '/blog'
+              href: '/products'
             },
             { 
               title: 'Products', 
               desc: 'Track and manage your affiliate products',
               icon: '🛍️',
               color: '#f59e0b',
-              href: '/blog'
+              href: '/products'
             }
           ].map((feature, i) => (
             <a key={i} href={feature.href} style={{
