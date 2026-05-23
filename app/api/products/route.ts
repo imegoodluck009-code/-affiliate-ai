@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 const supabase = createClient(
@@ -21,10 +22,20 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const { name, description, price, affiliate_link } = await request.json()
+  
+  const token = cookies().get('supabase-session')?.value
+  if (!token) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+  }
+
+  const { data: { user } } = await supabase.auth.getUser(token)
+  if (!user) {
+    return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
+  }
 
   const { data, error } = await supabase
     .from('affiliate_products')
-    .insert([{ name, description, price, affiliate_link }])
+    .insert([{ name, description, price, affiliate_link, user_id: user.id }])
     .select()
 
   if (error) {
