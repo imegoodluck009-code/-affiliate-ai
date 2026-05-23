@@ -5,13 +5,15 @@ import { useState, useRef, useEffect } from 'react'
 interface Message {
   role: 'user' | 'assistant'
   content: string
+  type?: 'blog' | 'product' | 'general'
 }
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: 'Hello! I am your Affiliate AI assistant. I can help you:\\n\\n• Write blog posts\\n• Create product descriptions\\n• Generate marketing content\\n\\nJust ask me anything, or use:\\n/blog [topic] - to generate a blog post\\n/product [name] - to generate a product description'
+      content: 'Hello! I am your Affiliate AI assistant. I can help you:\\n\\n• Write blog posts\\n• Create product descriptions\\n• Generate marketing content\\n\\nCommands:\\n/blog [topic] - Generate a blog post\\n/product [name] - Generate product description\\n\\nOr just ask me anything!',
+      type: 'general'
     }
   ])
   const [input, setInput] = useState('')
@@ -49,18 +51,21 @@ export default function ChatPage() {
       if (data.error) {
         setMessages(prev => [...prev, {
           role: 'assistant',
-          content: 'Sorry, I encountered an error. Please try again.'
+          content: 'Sorry, I encountered an error. Please try again.',
+          type: 'general'
         }])
       } else {
         setMessages(prev => [...prev, {
           role: 'assistant',
-          content: data.reply
+          content: data.reply,
+          type: data.type || 'general'
         }])
       }
     } catch (err) {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'Sorry, something went wrong. Please try again.'
+        content: 'Sorry, something went wrong. Please try again.',
+        type: 'general'
       }])
     } finally {
       setLoading(false)
@@ -69,8 +74,8 @@ export default function ChatPage() {
 
   const saveAsBlog = async (content: string) => {
     try {
-      // Extract title from first line or generate one
-      const title = content.split('\\n')[0].slice(0, 100) || 'AI Generated Post'
+      const lines = content.split('\n')
+      const title = lines[0].replace(/^#+ /, '').slice(0, 100) || 'AI Generated Post'
       const body = content
 
       const res = await fetch('/api/blog', {
@@ -90,11 +95,14 @@ export default function ChatPage() {
 
   const saveAsProduct = async (content: string) => {
     try {
+      const lines = content.split('\n')
+      const name = lines[0].replace(/^#+ /, '').slice(0, 100) || 'New Product'
+      
       const res = await fetch('/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: content.split('\\n')[0].slice(0, 100) || 'New Product',
+          name,
           description: content,
           price: '$0.00',
           affiliate_link: '#'
@@ -119,7 +127,6 @@ export default function ChatPage() {
       display: 'flex',
       flexDirection: 'column'
     }}>
-      {/* Header */}
       <nav style={{
         background: 'rgba(15, 15, 35, 0.9)',
         backdropFilter: 'blur(20px)',
@@ -158,7 +165,6 @@ export default function ChatPage() {
         </div>
       </nav>
 
-      {/* Chat Messages */}
       <div style={{
         flex: 1,
         overflowY: 'auto',
@@ -190,43 +196,80 @@ export default function ChatPage() {
               {msg.content}
             </div>
             
-            {/* Save buttons for AI responses */}
             {msg.role === 'assistant' && i > 0 && (
               <div style={{
                 display: 'flex',
                 gap: '10px',
                 marginLeft: '10px'
               }}>
-                <button
-                  onClick={() => saveAsBlog(msg.content)}
-                  style={{
-                    padding: '6px 14px',
-                    background: 'rgba(16, 185, 129, 0.1)',
-                    color: '#10b981',
-                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    fontWeight: '600'
-                  }}
-                >
-                  💾 Save as Blog
-                </button>
-                <button
-                  onClick={() => saveAsProduct(msg.content)}
-                  style={{
-                    padding: '6px 14px',
-                    background: 'rgba(245, 158, 11, 0.1)',
-                    color: '#f59e0b',
-                    border: '1px solid rgba(245, 158, 11, 0.3)',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    fontWeight: '600'
-                  }}
-                >
-                  💾 Save as Product
-                </button>
+                {msg.type === 'blog' && (
+                  <button
+                    onClick={() => saveAsBlog(msg.content)}
+                    style={{
+                      padding: '6px 14px',
+                      background: 'rgba(16, 185, 129, 0.1)',
+                      color: '#10b981',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    💾 Save as Blog
+                  </button>
+                )}
+                {msg.type === 'product' && (
+                  <button
+                    onClick={() => saveAsProduct(msg.content)}
+                    style={{
+                      padding: '6px 14px',
+                      background: 'rgba(245, 158, 11, 0.1)',
+                      color: '#f59e0b',
+                      border: '1px solid rgba(245, 158, 11, 0.3)',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    💾 Save as Product
+                  </button>
+                )}
+                {msg.type === 'general' && (
+                  <>
+                    <button
+                      onClick={() => saveAsBlog(msg.content)}
+                      style={{
+                        padding: '6px 14px',
+                        background: 'rgba(16, 185, 129, 0.1)',
+                        color: '#10b981',
+                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: '600'
+                      }}
+                    >
+                      💾 Save as Blog
+                    </button>
+                    <button
+                      onClick={() => saveAsProduct(msg.content)}
+                      style={{
+                        padding: '6px 14px',
+                        background: 'rgba(245, 158, 11, 0.1)',
+                        color: '#f59e0b',
+                        border: '1px solid rgba(245, 158, 11, 0.3)',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: '600'
+                      }}
+                    >
+                      💾 Save as Product
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -246,7 +289,6 @@ export default function ChatPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
       <div style={{
         borderTop: '1px solid rgba(255,255,255,0.1)',
         padding: '20px 32px',
@@ -262,7 +304,7 @@ export default function ChatPage() {
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Ask me anything... (try: /blog write about fitness products)"
+            placeholder="Try: /blog best fitness trackers 2026"
             disabled={loading}
             style={{
               flex: 1,
