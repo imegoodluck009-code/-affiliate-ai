@@ -8,6 +8,7 @@ interface Product {
   description: string
   price: string
   affiliate_link: string
+  image_url: string | null
   created_at: string
 }
 
@@ -23,9 +24,11 @@ export default function ProductsPage() {
     name: '',
     description: '',
     price: '',
-    affiliate_link: ''
+    affiliate_link: '',
+    image_url: ''
   })
   const [creating, setCreating] = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     fetchProducts()
@@ -43,6 +46,39 @@ export default function ProductsPage() {
     }
   }
 
+  // IMAGE UPLOAD
+  async function handleImageUpload(e: React.ChangeEvent<<HTMLInputElement>, isEdit: boolean = false) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      const data = await res.json()
+      if (data.url) {
+        if (isEdit) {
+          setEditForm(prev => ({ ...prev, image_url: data.url }))
+        } else {
+          setNewProduct(prev => ({ ...prev, image_url: data.url }))
+        }
+      } else {
+        alert('Upload failed: ' + (data.error || 'Unknown error'))
+      }
+    } catch (err) {
+      console.error('Upload error:', err)
+      alert('Upload failed. Check console for details.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setCreating(true)
@@ -53,7 +89,7 @@ export default function ProductsPage() {
         body: JSON.stringify(newProduct)
       })
       if (res.ok) {
-        setNewProduct({ name: '', description: '', price: '', affiliate_link: '' })
+        setNewProduct({ name: '', description: '', price: '', affiliate_link: '', image_url: '' })
         setShowForm(false)
         fetchProducts()
       }
@@ -182,10 +218,24 @@ export default function ProductsPage() {
                   placeholder="https://..."
                 />
               </div>
+              {/* IMAGE UPLOAD */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Product Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e, false)}
+                  className="input"
+                />
+                {uploading && <p className="text-sm text-blue-400 mt-1">Uploading...</p>}
+                {newProduct.image_url && (
+                  <img src={newProduct.image_url} alt="Preview" className="mt-2 h-32 w-32 object-cover rounded-md" />
+                )}
+              </div>
               <div className="flex gap-2 pt-2">
                 <button
                   type="submit"
-                  disabled={creating}
+                  disabled={creating || uploading}
                   className="btn-primary"
                 >
                   {creating ? 'Creating...' : 'Create Product'}
@@ -244,10 +294,24 @@ export default function ProductsPage() {
                       className="input"
                     />
                   </div>
+                  {/* EDIT IMAGE UPLOAD */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Product Image</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, true)}
+                      className="input"
+                    />
+                    {uploading && <p className="text-sm text-blue-400 mt-1">Uploading...</p>}
+                    {editForm.image_url && (
+                      <img src={editForm.image_url} alt="Preview" className="mt-2 h-32 w-32 object-cover rounded-md" />
+                    )}
+                  </div>
                   <div className="flex gap-2 pt-2">
                     <button
                       onClick={() => saveEdit(product.id)}
-                      disabled={saving}
+                      disabled={saving || uploading}
                       className="btn-primary flex-1"
                     >
                       {saving ? 'Saving...' : 'Save'}
@@ -262,6 +326,9 @@ export default function ProductsPage() {
                 </div>
               ) : (
                 <div className="p-6">
+                  {product.image_url && (
+                    <img src={product.image_url} alt={product.name} className="w-full h-48 object-cover rounded-md mb-4" />
+                  )}
                   <h2 className="text-xl font-semibold text-white mb-2">{product.name}</h2>
                   <p className="text-gray-300 mb-4 line-clamp-3">{product.description}</p>
                   <div className="flex items-center justify-between mb-4">
