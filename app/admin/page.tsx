@@ -7,7 +7,7 @@ import StatCard from "../../components/StatCard";
 import SectionCard from "../../components/SectionCard";
 
 export default function AdminPage() {
-  const [data, setData] = useState<<AdminData | null>(null);
+  const [data, setData] = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
