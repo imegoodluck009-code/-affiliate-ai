@@ -26,7 +26,7 @@ interface AdminData {
 }
 
 export default function AdminPage() {
-  const [data, setData] = useState<<AdminData | null>(null);
+  const [data, setData] = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
