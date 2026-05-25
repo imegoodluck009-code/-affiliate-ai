@@ -28,7 +28,7 @@ export default function AdminPage() {
           <h1 style={{ fontSize: "1.875rem", fontWeight: "bold", color: "#ffffff", margin: 0 }}>Admin Dashboard</h1>
           <div style={{ display: "flex", gap: "0.75rem" }}>
             <Link href="/products" style={{ padding: "0.5rem 1rem", background: "linear-gradient(to right, #edc97a, #d49a2e)", color: "#0a192f", borderRadius: "0.375rem", textDecoration: "none", fontSize: "0.875rem", fontWeight: "600" }}>+ Add Product</Link>
-            <Link href="/blog" style={{ padding: "0.5rem 1rem", background: "rgba(255,255,255,0.05)", color: "#d49a2e", border: "1px solid rgba(212, 154, 46, 0.3)", borderRadius: "0.375rem", textDecoration: "none", fontSize: "0.875rem", fontWeight: "600" }}>+ Add Post</Link>
+            <Link href="/blog/new" style={{ padding: "0.5rem 1rem", background: "rgba(255,255,255,0.05)", color: "#d49a2e", border: "1px solid rgba(212, 154, 46, 0.3)", borderRadius: "0.375rem", textDecoration: "none", fontSize: "0.875rem", fontWeight: "600" }}>+ Add Post</Link>
           </div>
         </div>
 
@@ -56,7 +56,7 @@ export default function AdminPage() {
             )}
           </SectionCard>
 
-          <SectionCard title="Recent Blog Posts" href="/blog">
+          <SectionCard title="Recent Blog Posts" href="/blog/new">
             {(data?.posts?.length ?? 0) === 0 ? (
               <div style={{ color: "#9fb3c8", fontSize: "0.875rem" }}>No posts yet.</div>
             ) : (
