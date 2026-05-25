@@ -4,17 +4,19 @@ import { useEffect, useState } from 'react'
 
 interface BlogPost {
   id: string
-  title: string
+title: string
   content: string
+  image_url: string | null
   created_at: string
 }
 
 export default function BlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
-  const [newPost, setNewPost] = useState({ title: '', content: '' })
+  const [newPost, setNewPost] = useState({ title: '', content: '', image_url: '' })
   const [editPost, setEditPost] = useState<BlogPost | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     fetchPosts()
@@ -31,6 +33,38 @@ export default function BlogPage() {
     setLoading(false)
   }
 
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean = false) {
+    const file = e.target.files?.[0]
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+   if (file) formData.append('file', file)
+
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      const data = await res.json()
+      if (data.url) {
+        if (isEdit && editPost) {
+          setEditPost({ ...editPost, image_url: data.url })
+        } else {
+          setNewPost(prev => ({ ...prev, image_url: data.url }))
+        }
+      } else {
+        alert('Upload failed: ' + (data.error || 'Unknown error'))
+      }
+    } catch (err) {
+      console.error('Upload error:', err)
+      alert('Upload failed. Check console for details.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -40,45 +74,57 @@ export default function BlogPage() {
         body: JSON.stringify(newPost)
       })
       if (res.ok) {
-        setNewPost({ title: '', content: '' })
+        setNewPost({ title: '', content: '', image_url: '' })
         setShowForm(false)
         fetchPosts()
+      } else {
+        const error = await res.json()
+        alert('Failed to create post: ' + (error.error || 'Unknown error'))
       }
     } catch (err) {
       console.error('Failed to create post:', err)
+      alert('Failed to create post. Check console.')
     }
   }
 
-  const handleUpdate = async (e: React.FormEvent) => {
+ const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!editPost) return
 
     try {
       const res = await fetch('/api/blog', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: editPost.id,
-          title: editPost.title,
-          content: editPost.content
+          id: editPost!.id,
+          title: editPost!.title,
+          content: editPost!.content,
+          image_url: editPost!.image_url
         })
       })
       if (res.ok) {
         setEditPost(null)
         fetchPosts()
+      } else {
+        const error = await res.json()
+        alert('Failed to update post: ' + (error.error || 'Unknown error'))
       }
     } catch (err) {
       console.error('Failed to update post:', err)
+      alert('Failed to update post. Check console.')
     }
-n  }
+  }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this post?')) return
     try {
-      await fetch(`/api/blog?id=${id}`, { method: 'DELETE' })
-      fetchPosts()
+      const res = await fetch('/api/blog?id=' + id, { method: 'DELETE' })
+      if (res.ok) {
+        fetchPosts()
+      } else {
+        alert('Failed to delete post')
+      }
     } catch (err) {
       console.error('Failed to delete post:', err)
+      alert('Failed to delete post. Check console.')
     }
   }
 
@@ -96,14 +142,12 @@ n  }
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-white">Blog Posts</h1>
           <button
-            onClick={() => { setShowForm(!showForm); setEditPost(null) }}
             className="btn-primary"
           >
             {showForm ? 'Cancel' : '+ New Post'}
           </button>
         </div>
 
-        {/* Create Form */}
         {showForm && (
           <div className="card p-6 mb-8">
             <h2 className="text-xl font-semibold mb-4 text-white">Create New Post</h2>
@@ -130,15 +174,29 @@ n  }
                   placeholder="Write your post content..."
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Post Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e, false)}
+                  className="input"
+                />
+                {uploading && <p className="text-sm text-blue-400 mt-1">Uploading...</p>}
+                {newPost.image_url && (
+                  <img src={newPost.image_url} alt="Preview" className="mt-2 h-32 w-32 object-cover rounded-md" />
+                )}
+              </div>
               <div className="flex gap-2">
-                <button type="submit" className="btn-primary">Create Post</button>
+                <button type="submit" className="btn-primary" disabled={uploading}>
+                  {uploading ? 'Uploading...' : 'Create Post'}
+                </button>
                 <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">Cancel</button>
               </div>
             </form>
           </div>
         )}
 
-        {/* Edit Form */}
         {editPost && (
           <div className="card p-6 mb-8">
             <h2 className="text-xl font-semibold mb-4 text-white">Edit Post</h2>
@@ -163,18 +221,35 @@ n  }
                   className="input"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Post Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e, true)}
+                  className="input"
+                />
+                {uploading && <p className="text-sm text-blue-400 mt-1">Uploading...</p>}
+                {editPost.image_url && (
+                  <img src={editPost.image_url} alt="Preview" className="mt-2 h-32 w-32 object-cover rounded-md" />
+                )}
+              </div>
               <div className="flex gap-2">
-                <button type="submit" className="btn-primary">Update Post</button>
+                <button type="submit" className="btn-primary" disabled={uploading}>
+                  {uploading ? 'Uploading...' : 'Update Post'}
+                </button>
                 <button type="button" onClick={() => setEditPost(null)} className="btn-secondary">Cancel</button>
               </div>
             </form>
           </div>
         )}
 
-        {/* Posts List */}
         <div className="space-y-4">
           {posts.map((post) => (
             <div key={post.id} className="card p-6">
+              {post.image_url && (
+                <img src={post.image_url} alt={post.title} className="w-full h-48 object-cover rounded-md mb-4" />
+              )}
               <h2 className="text-xl font-semibold text-white mb-2">{post.title}</h2>
               <p className="text-gray-300 mb-4 whitespace-pre-wrap">{post.content}</p>
               <div className="flex items-center justify-between">

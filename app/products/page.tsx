@@ -16,7 +16,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState<<Partial<Product>>({})
+  const [editForm, setEditForm] = useState<Partial<Product>>({})
   const [saving, setSaving] = useState(false)
   
   const [showForm, setShowForm] = useState(false)
@@ -47,7 +47,7 @@ export default function ProductsPage() {
   }
 
   // IMAGE UPLOAD
-  async function handleImageUpload(e: React.ChangeEvent<<HTMLInputElement>, isEdit: boolean = false) {
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean = false) {
     const file = e.target.files?.[0]
     if (!file) return
 

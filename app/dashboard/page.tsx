@@ -222,7 +222,7 @@ export default function Dashboard() {
               desc: 'Create and manage AI-generated blog content',
               icon: '📝',
               color: '#10b981',
-              href: '/products'
+              href: '/blog'
             },
             { 
               title: 'Products', 
