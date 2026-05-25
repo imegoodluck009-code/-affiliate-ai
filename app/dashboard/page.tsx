@@ -1,27 +1,42 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
+
+interface Stats {
+  blog_posts: number
+  products: number
+  users: number
+  earnings: number
+}
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null)
+  const [stats, setStats] = useState<Stats>({ blog_posts: 0, products: 0, users: 0, earnings: 0 })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const getUser = async () => {
+    const getData = async () => {
       try {
-        const res = await fetch('/api/auth/me')
-        const data = await res.json()
-        if (!data.user) {
+        // Get user
+        const userRes = await fetch('/api/auth/me')
+        const userData = await userRes.json()
+        if (!userData.user) {
           window.location.href = '/auth'
-        } else {
-          setUser(data.user)
+          return
         }
+        setUser(userData.user)
+
+        // Get stats
+        const statsRes = await fetch('/api/stats')
+        const statsData = await statsRes.json()
+        setStats(statsData)
       } catch (err) {
-        window.location.href = '/auth'
+        console.error('Dashboard load error:', err)
       }
       setLoading(false)
     }
-    getUser()
+    getData()
   }, [])
 
   const handleLogout = async () => {
@@ -43,87 +58,112 @@ export default function Dashboard() {
   )
   if (!user) return null
 
+  const statCards = [
+    { 
+      title: 'Blog Posts', 
+      value: stats.blog_posts.toString(), 
+      change: 'Total posts',
+      color: '#10b981',
+      href: '/blog'
+    },
+    { 
+      title: 'Affiliate Products', 
+      value: stats.products.toString(), 
+      change: 'Total products',
+      color: '#f59e0b',
+      href: '/products'
+    },
+    { 
+      title: 'Users', 
+      value: stats.users.toString(), 
+      change: 'Registered users',
+      color: '#667eea',
+      href: '#'
+    },
+    { 
+      title: 'Total Earnings', 
+      value: '$' + stats.earnings.toFixed(2), 
+      change: 'Get started',
+      color: '#ef4444',
+      href: '#'
+    }
+  ]
+
+  const features = [
+    {
+      title: 'AI Assistant',
+      desc: 'Chat with your AI to generate content and get recommendations',
+      icon: '🤖',
+      color: '#667eea',
+      href: '/chat'
+    },
+    {
+      title: 'Blog Posts',
+      desc: 'Create and manage AI-generated blog content',
+      icon: '📝',
+      color: '#10b981',
+      href: '/blog'
+    },
+    {
+      title: 'Products',
+      desc: 'Track and manage your affiliate products',
+      icon: '🛍️',
+      color: '#f59e0b',
+      href: '/products'
+    }
+  ]
+
   return (
     <div style={{
       minHeight: '100vh',
       background: '#0f0f23',
       color: '#e0e0e0',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      paddingTop: '5rem' // Space for fixed Navbar
     }}>
-      {/* Navbar */}
-      <nav style={{
+      {/* User Bar */}
+      <div style={{
         background: 'rgba(15, 15, 35, 0.8)',
         backdropFilter: 'blur(20px)',
         borderBottom: '1px solid rgba(255,255,255,0.1)',
-        padding: '16px 32px',
+        padding: '12px 32px',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100
+        alignItems: 'center'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
-            width: '36px',
-            height: '36px',
+            width: '32px',
+            height: '32px',
             background: 'linear-gradient(135deg, #667eea, #764ba2)',
-            borderRadius: '10px',
+            borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontWeight: 'bold',
             color: 'white',
-            fontSize: '18px'
+            fontSize: '14px'
           }}>
-            A
+            {user.email?.charAt(0).toUpperCase() || 'U'}
           </div>
-          <h1 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#fff' }}>
-            Affiliate AI
-          </h1>
+          <span style={{ fontSize: '14px', color: '#a0a0b0' }}>{user.email}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 16px',
-            background: 'rgba(255,255,255,0.05)',
-            borderRadius: '20px',
-            border: '1px solid rgba(255,255,255,0.1)'
-          }}>
-            <div style={{
-              width: '8px',
-              height: '8px',
-              background: '#4ade80',
-              borderRadius: '50%'
-            }} />
-            <span style={{ fontSize: '14px', color: '#a0a0b0' }}>{user.email}</span>
-          </div>
-          <button
-            onClick={handleLogout}
-            style={{
-              padding: '10px 24px',
-              background: 'rgba(239, 68, 68, 0.1)',
-              color: '#ef4444',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: '600',
-              fontSize: '14px',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'
-            }}
-          >
-            Logout
-          </button>
-        </div>
-      </nav>
+        <button
+          onClick={handleLogout}
+          style={{
+            padding: '8px 20px',
+            background: 'rgba(239, 68, 68, 0.1)',
+            color: '#ef4444',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: '600',
+            fontSize: '13px'
+          }}
+        >
+          Logout
+        </button>
+      </div>
 
       {/* Main Content */}
       <main style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto' }}>
@@ -146,57 +186,54 @@ export default function Dashboard() {
         {/* Stats Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
           gap: '20px',
           marginBottom: '32px'
         }}>
-          {[
-            { title: 'AI Chat Sessions', value: '24', change: '+12%', color: '#667eea' },
-            { title: 'Blog Posts', value: '8', change: '+3 this week', color: '#10b981' },
-            { title: 'Affiliate Products', value: '15', change: '+5 new', color: '#f59e0b' },
-            { title: 'Total Earnings', value: '$0.00', change: 'Get started', color: '#ef4444' }
-          ].map((stat, i) => (
-            <div key={i} style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '16px',
-              padding: '24px',
-              transition: 'all 0.3s',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.borderColor = stat.color + '40'
-              e.currentTarget.style.transform = 'translateY(-4px)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
-              e.currentTarget.style.transform = 'translateY(0)'
-            }}
-            >
+          {statCards.map((stat, i) => (
+            <Link key={i} href={stat.href} style={{ textDecoration: 'none' }}>
               <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'start',
-                marginBottom: '16px'
-              }}>
-                <h3 style={{ margin: 0, fontSize: '14px', color: '#a0a0b0', fontWeight: '500' }}>
-                  {stat.title}
-                </h3>
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '16px',
+                padding: '24px',
+                transition: 'all 0.3s',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = stat.color + '40'
+                e.currentTarget.style.transform = 'translateY(-4px)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+                e.currentTarget.style.transform = 'translateY(0)'
+              }}
+              >
                 <div style={{
-                  width: '8px',
-                  height: '8px',
-                  background: stat.color,
-                  borderRadius: '50%',
-                  boxShadow: `0 0 12px ${stat.color}60`
-                }} />
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'start',
+                  marginBottom: '16px'
+                }}>
+                  <h3 style={{ margin: 0, fontSize: '14px', color: '#a0a0b0', fontWeight: '500' }}>
+                    {stat.title}
+                  </h3>
+                  <div style={{
+                    width: '8px',
+                    height: '8px',
+                    background: stat.color,
+                    borderRadius: '50%',
+                    boxShadow: `0 0 12px ${stat.color}60`
+                  }} />
+                </div>
+                <div style={{ fontSize: '32px', fontWeight: '700', color: '#fff', marginBottom: '8px' }}>
+                  {stat.value}
+                </div>
+                <div style={{ fontSize: '13px', color: stat.color, fontWeight: '600' }}>
+                  {stat.change}
+                </div>
               </div>
-              <div style={{ fontSize: '32px', fontWeight: '700', color: '#fff', marginBottom: '8px' }}>
-                {stat.value}
-              </div>
-              <div style={{ fontSize: '13px', color: stat.color, fontWeight: '600' }}>
-                {stat.change}
-              </div>
-            </div>
+            </Link>
           ))}
         </div>
 
@@ -206,70 +243,48 @@ export default function Dashboard() {
         </h3>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(1, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
           gap: '20px'
         }}>
-          {[
-            { 
-              title: 'AI Assistant', 
-              desc: 'Chat with your AI to generate content and get recommendations',
-              icon: '🤖',
-              color: '#667eea',
-              href: '/chat'
-            },
-            { 
-              title: 'Blog Posts', 
-              desc: 'Create and manage AI-generated blog content',
-              icon: '📝',
-              color: '#10b981',
-              href: '/blog'
-            },
-            { 
-              title: 'Products', 
-              desc: 'Track and manage your affiliate products',
-              icon: '🛍️',
-              color: '#f59e0b',
-              href: '/products'
-            }
-          ].map((feature, i) => (
-            <a key={i} href={feature.href} style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '16px',
-              padding: '28px',
-              textDecoration: 'none',
-              color: 'inherit',
-              display: 'block',
-              transition: 'all 0.3s'
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.borderColor = feature.color + '40'
-              e.currentTarget.style.background = feature.color + '08'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
-              e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
-            }}
-            >
-              <div style={{ fontSize: '36px', marginBottom: '16px' }}>{feature.icon}</div>
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '18px', color: '#fff', fontWeight: '600' }}>
-                {feature.title}
-              </h4>
-              <p style={{ margin: 0, fontSize: '14px', color: '#a0a0b0', lineHeight: 1.5 }}>
-                {feature.desc}
-              </p>
+          {features.map((feature, i) => (
+            <Link key={i} href={feature.href} style={{ textDecoration: 'none', color: 'inherit' }}>
               <div style={{
-                marginTop: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                color: feature.color,
-                fontSize: '14px',
-                fontWeight: '600'
-              }}>
-                Get Started →
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '16px',
+                padding: '28px',
+                display: 'block',
+                transition: 'all 0.3s'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = feature.color + '40'
+                e.currentTarget.style.background = feature.color + '08'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
+                e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
+              }}
+              >
+                <div style={{ fontSize: '36px', marginBottom: '16px' }}>{feature.icon}</div>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '18px', color: '#fff', fontWeight: '600' }}>
+                  {feature.title}
+                </h4>
+                <p style={{ margin: 0, fontSize: '14px', color: '#a0a0b0', lineHeight: 1.5 }}>
+                  {feature.desc}
+                </p>
+                <div style={{
+                  marginTop: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  color: feature.color,
+                  fontSize: '14px',
+                  fontWeight: '600'
+                }}>
+                  Get Started →
+                </div>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       </main>
