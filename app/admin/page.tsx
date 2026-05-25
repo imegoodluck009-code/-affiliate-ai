@@ -10,13 +10,13 @@ interface AdminData {
     clicks: number;
     revenue: number;
   };
-  products: Array<<{
+  products: Array<{
     id: string;
     name: string;
     category: string;
     created_at: string;
   }>;
-  posts: Array<<{
+  posts: Array<{
     id: string;
     title: string;
     slug: string;
