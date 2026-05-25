@@ -11,38 +11,22 @@ interface Stats {
 }
 
 export default function Dashboard() {
-  const [user, setUser] = useState<any>(null)
   const [stats, setStats] = useState<Stats>({ blog_posts: 0, products: 0, users: 0, earnings: 0 })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const getData = async () => {
+    const getStats = async () => {
       try {
-        // Get user
-        const userRes = await fetch('/api/auth/me')
-        const userData = await userRes.json()
-        if (!userData.user) {
-          window.location.href = '/auth'
-          return
-        }
-        setUser(userData.user)
-
-        // Get stats
-        const statsRes = await fetch('/api/stats')
-        const statsData = await statsRes.json()
-        setStats(statsData)
+        const res = await fetch('/api/stats')
+        const data = await res.json()
+        setStats(data)
       } catch (err) {
-        console.error('Dashboard load error:', err)
+        console.error('Stats load error:', err)
       }
       setLoading(false)
     }
-    getData()
+    getStats()
   }, [])
-
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
-    window.location.href = '/auth'
-  }
 
   if (loading) return (
     <div style={{
@@ -51,12 +35,12 @@ export default function Dashboard() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      color: '#a0a0b0'
+      color: '#a0a0b0',
+      paddingTop: '5rem'
     }}>
       Loading...
     </div>
   )
-  if (!user) return null
 
   const statCards = [
     { 
@@ -119,52 +103,8 @@ export default function Dashboard() {
       background: '#0f0f23',
       color: '#e0e0e0',
       fontFamily: 'system-ui, -apple-system, sans-serif',
-      paddingTop: '5rem' // Space for fixed Navbar
+      paddingTop: '5rem'
     }}>
-      {/* User Bar */}
-      <div style={{
-        background: 'rgba(15, 15, 35, 0.8)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255,255,255,0.1)',
-        padding: '12px 32px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '32px',
-            height: '32px',
-            background: 'linear-gradient(135deg, #667eea, #764ba2)',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 'bold',
-            color: 'white',
-            fontSize: '14px'
-          }}>
-            {user.email?.charAt(0).toUpperCase() || 'U'}
-          </div>
-          <span style={{ fontSize: '14px', color: '#a0a0b0' }}>{user.email}</span>
-        </div>
-        <button
-          onClick={handleLogout}
-          style={{
-            padding: '8px 20px',
-            background: 'rgba(239, 68, 68, 0.1)',
-            color: '#ef4444',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontWeight: '600',
-            fontSize: '13px'
-          }}
-        >
-          Logout
-        </button>
-      </div>
-
       {/* Main Content */}
       <main style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto' }}>
         {/* Welcome Section */}
@@ -176,7 +116,7 @@ export default function Dashboard() {
           marginBottom: '32px'
         }}>
           <h2 style={{ margin: '0 0 8px 0', fontSize: '28px', color: '#fff' }}>
-            Welcome back, {user.user_metadata?.name || user.email.split('@')[0]}!
+            Welcome to Affiliate AI
           </h2>
           <p style={{ margin: 0, color: '#a0a0b0', fontSize: '16px' }}>
             Here's what's happening with your affiliate marketing today.
