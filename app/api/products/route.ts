@@ -1,86 +1,28 @@
-import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+);
 
-export async function GET() {
-  const { data, error } = await supabase
-    .from('affiliate_products')
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const userId = searchParams.get('userId');
+  
+  const { data: products, error } = await supabase
+    .from('products')
     .select('*')
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  return NextResponse.json({ products: data })
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+    
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ products });
 }
 
-export async function POST(request: Request) {
-  const { name, description, price, affiliate_link, image_url } = await request.json()
-
-  const token = cookies().get('supabase-session')?.value
-  if (!token) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
-
-  const { data: { user } } = await supabase.auth.getUser(token)
-  if (!user) {
-    return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
-  }
-
-  const { data, error } = await supabase
-    .from('affiliate_products')
-    .insert([{ name, description, price, affiliate_link, image_url, user_id: user.id }])
-    .select()
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  return NextResponse.json({ product: data[0] })
-}
-
-export async function PUT(request: Request) {
-  const { id, name, description, price, affiliate_link, image_url } = await request.json()
-
-  if (!id) {
-    return NextResponse.json({ error: 'ID required' }, { status: 400 })
-  }
-
-  const { data, error } = await supabase
-    .from('affiliate_products')
-    .update({ name, description, price, affiliate_link, image_url })
-    .eq('id', id)
-    .select()
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  return NextResponse.json({ product: data[0] })
-}
-
-export async function DELETE(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const id = searchParams.get('id')
-
-  if (!id) {
-    return NextResponse.json({ error: 'ID required' }, { status: 400 })
-  }
-
-  const { error } = await supabase
-    .from('affiliate_products')
-    .delete()
-    .eq('id', id)
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  return NextResponse.json({ message: 'Deleted' })
+export async function POST(req: Request) {
+  const body = await req.json();
+  const { data, error } = await supabase.from('products').insert(body).select().single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ product: data });
 }
