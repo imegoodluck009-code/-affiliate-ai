@@ -1,11 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 export default function SignupPage() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const ref = searchParams.get("ref");
@@ -21,6 +23,7 @@ export default function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     const referralCode = localStorage.getItem("referral_code");
     const res = await fetch("/api/auth/signup", {
       method: "POST",
@@ -32,16 +35,60 @@ export default function SignupPage() {
       alert("Account created! Your referral code: " + data.referralCode);
       localStorage.removeItem("referral_code");
     }
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900">
-      <form onSubmit={handleSignup} className="p-6 bg-gray-800 rounded-lg w-full max-w-sm">
-        <h2 className="text-xl font-bold text-white mb-4">Sign Up</h2>
-        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full mb-3 p-2 bg-gray-900 rounded text-white" required />
-        <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Password" className="w-full mb-4 p-2 bg-gray-900 rounded text-white" required />
-        <button type="submit" className="w-full p-2 bg-blue-600 rounded text-white font-medium">Create Account</button>
-      </form>
+    <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-2">⚡ Affiliate AI</h1>
+          <p className="text-gray-400">Create your free account</p>
+        </div>
+
+        <div className="bg-gray-900 rounded-2xl border border-gray-800 p-8 shadow-xl">
+          <form onSubmit={handleSignup} className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+              <input 
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-800 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+                placeholder="you@example.com"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
+              <input 
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-800 rounded-lg border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            <button 
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-green-600 rounded-lg font-bold text-white hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500 transition"
+            >
+              {loading ? "Creating account..." : "Create Account"}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-400">
+              Already have an account?{" "}
+              <Link href="/login" className="text-blue-400 hover:text-blue-300 font-medium">
+                Sign In
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
