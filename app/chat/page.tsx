@@ -35,8 +35,8 @@ export default function ChatPage() {
 
       const data = await res.json()
 
-      if (data.response) {
-        setMessages(prev => [...prev, { role: 'assistant', content: data.response }])
+      if (data.reply) {
+        setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
       } else {
         setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I could not process that.' }])
       }
