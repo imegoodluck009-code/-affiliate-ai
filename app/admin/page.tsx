@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Loading from "../components/Loading";
+import Loading from "../../components/Loading";
 
 interface AdminData {
   counts: { products: number; posts: number; clicks: number; revenue: number };
