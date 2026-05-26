@@ -12,7 +12,7 @@ interface Stats {
 }
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<<Stats | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
