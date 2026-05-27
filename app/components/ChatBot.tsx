@@ -18,7 +18,7 @@ export default function ChatBot() {
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [showTicketForm, setShowTicketForm] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
-  const messagesEndRef = useRef<<HTMLDivElement>(null);
+   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
