@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-export default function SignupPage() {
+function SignupForm() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,7 +45,6 @@ export default function SignupPage() {
           <h1 className="text-4xl font-bold mb-2">⚡ Affiliate AI</h1>
           <p className="text-gray-400">Create your free account</p>
         </div>
-
         <div className="bg-gray-900 rounded-2xl border border-gray-800 p-8 shadow-xl">
           <form onSubmit={handleSignup} className="space-y-5">
             <div>
@@ -78,17 +77,29 @@ export default function SignupPage() {
               {loading ? "Creating account..." : "Create Account"}
             </button>
           </form>
-
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-400">
               Already have an account?{" "}
-              <Link href="/login" className="text-blue-400 hover:text-blue-300 font-medium">
-                Sign In
-              </Link>
+              <Link href="/login" className="text-blue-400 hover:text-blue-300 font-medium">Sign In</Link>
             </p>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    }>
+      <SignupForm />
+    </Suspense>
   );
 }
