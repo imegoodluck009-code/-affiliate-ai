@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import Groq from 'groq-sdk';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -28,7 +28,6 @@ export async function POST(req: Request) {
   try {
     const { message, sessionToken, userId } = await req.json();
     
-    // Get or create session
     let sessionId: string | undefined = undefined;
     
     if (sessionToken) {
@@ -49,7 +48,6 @@ export async function POST(req: Request) {
       sessionId = newSession!.id;
     }
 
-    // Get conversation history
     const { data: history } = await supabase
       .from('chat_messages')
       .select('role, content')
@@ -57,14 +55,12 @@ export async function POST(req: Request) {
       .order('created_at', { ascending: true })
       .limit(20);
 
-    // Build messages for OpenAI
     const messages = [
       { role: 'system' as const, content: SYSTEM_PROMPT },
       ...(history || []).map(h => ({ role: h.role as 'user' | 'assistant', content: h.content })),
       { role: 'user' as const, content: message }
     ];
 
-    // Detect intent
     const lowerMsg = message.toLowerCase();
     let specialAction = null;
 
@@ -76,9 +72,9 @@ export async function POST(req: Request) {
       specialAction = { type: 'lead', data: null };
     }
 
-    // Call OpenAI
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+    // Call Groq instead of OpenAI
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.1-8b-instant', // Fast, cheap Groq model
       messages: messages as any,
       temperature: 0.7,
       max_tokens: 500,
@@ -86,13 +82,11 @@ export async function POST(req: Request) {
 
     const reply = completion.choices[0].message.content || 'I apologize, I could not generate a response.';
 
-    // Store messages
     await supabase.from('chat_messages').insert([
       { session_id: sessionId, role: 'user', content: message },
       { session_id: sessionId, role: 'assistant', content: reply, metadata: specialAction || {} }
     ]);
 
-    // Get the session token to return
     const { data: sessionData } = await supabase
       .from('chat_sessions')
       .select('session_token')
