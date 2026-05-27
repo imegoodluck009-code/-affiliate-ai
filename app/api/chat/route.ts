@@ -1,58 +1,108 @@
-import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server';
+import OpenAI from 'openai';
 
-export async function POST(request: Request) {
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+const SYSTEM_PROMPT = `You are AffiliateBot, an AI assistant for an affiliate marketing platform. You can help users with:
+
+1. GENERAL QUESTIONS: Explain how affiliate marketing works, platform features, pricing
+2. REFERRALS: Generate referral links, explain the referral program, show earnings
+3. LEAD CAPTURE: Collect visitor emails for marketing campaigns
+4. SUPPORT: Create support tickets for technical issues, bugs, account problems
+5. CAMPAIGNS: Give advice on ad campaigns, suggest optimizations, explain tracking
+
+When a user wants to:
+- Create a referral link → ask for their user ID, then generate a link
+- Report a bug → collect: email, subject, description, then create a ticket
+- Leave email → collect name and email, store as lead
+- Campaign help → ask for campaign ID or general advice
+
+Be friendly, professional, and concise. Use emojis occasionally.`;
+
+export async function POST(req: Request) {
   try {
-    const { message } = await request.json()
-
-    // Detect commands
-    let systemPrompt = 'You are an AI assistant for an affiliate marketing platform. Help users with content generation, product recommendations, and marketing strategies.'
-    let userMessage = message
-
-    if (message.startsWith('/blog ')) {
-      const topic = message.replace('/blog ', '')
-      systemPrompt = `You are a professional blog writer for an affiliate marketing platform. Write a complete, engaging blog post about: ${topic}. Include: catchy title, introduction, main points with subheadings, and a conclusion with a call-to-action. Format with clear paragraphs.`
-      userMessage = `Write a blog post about: ${topic}`
-    } else if (message.startsWith('/product ')) {
-      const productName = message.replace('/product ', '')
-      systemPrompt = `You are a professional product copywriter. Create a compelling product description for: ${productName}. Include: product name, key features, benefits, target audience, and a persuasive description. Make it conversion-focused for affiliate marketing.`
-      userMessage = `Create a product description for: ${productName}`
+    const { message, sessionToken, userId } = await req.json();
+    
+    // Get or create session
+    let sessionId: string;
+    if (sessionToken) {
+      const { data: existing } = await supabase
+        .from('chat_sessions')
+        .select('id')
+        .eq('session_token', sessionToken)
+        .single();
+      sessionId = existing?.id;
+    }
+    
+    if (!sessionId) {
+      const { data: newSession } = await supabase
+        .from('chat_sessions')
+        .insert({ user_id: userId || null, session_token: crypto.randomUUID() })
+        .select()
+        .single();
+      sessionId = newSession.id;
     }
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage }
-        ],
-        temperature: 0.7,
-        max_tokens: 2048
-      })
-    })
+    // Get conversation history
+    const { data: history } = await supabase
+      .from('chat_messages')
+      .select('role, content')
+      .eq('session_id', sessionId)
+      .order('created_at', { ascending: true })
+      .limit(20);
 
-    const data = await response.json()
+    // Build messages for OpenAI
+    const messages = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...(history || []).map(h => ({ role: h.role, content: h.content })),
+      { role: 'user', content: message }
+    ];
 
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: data.error?.message || 'AI request failed' },
-        { status: 500 }
-      )
+    // Detect intent and handle special actions
+    const lowerMsg = message.toLowerCase();
+    let specialAction = null;
+
+    // Referral request
+    if (lowerMsg.includes('referral') && lowerMsg.includes('link')) {
+      specialAction = { type: 'referral', data: null };
     }
+    // Support ticket
+    else if (lowerMsg.includes('bug') || lowerMsg.includes('issue') || lowerMsg.includes('problem')) {
+      specialAction = { type: 'support', data: null };
+    }
+    // Lead capture
+    else if (lowerMsg.includes('email') && (lowerMsg.includes('subscribe') || lowerMsg.includes('newsletter'))) {
+      specialAction = { type: 'lead', data: null };
+    }
+
+    // Call OpenAI
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: messages as any,
+      temperature: 0.7,
+      max_tokens: 500,
+    });
+
+    const reply = completion.choices[0].message.content;
+
+    // Store messages
+    await supabase.from('chat_messages').insert([
+      { session_id: sessionId, role: 'user', content: message },
+      { session_id: sessionId, role: 'assistant', content: reply, metadata: specialAction || {} }
+    ]);
 
     return NextResponse.json({
-      reply: data.choices[0].message.content,
-      type: message.startsWith('/blog') ? 'blog' : message.startsWith('/product') ? 'product' : 'general'
-    })
-  } catch (error) {
-    console.error('Chat API error:', error)
-    return NextResponse.json(
-      { error: 'Failed to get AI response' },
-      { status: 500 }
-    )
+      reply,
+      sessionToken: sessionToken || (await supabase.from('chat_sessions').select('session_token').eq('id', sessionId).single()).data?.session_token,
+      action: specialAction
+    });
+
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

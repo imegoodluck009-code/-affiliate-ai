@@ -1,107 +1,98 @@
 "use client";
-
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import Loading from "../../components/Loading";
-
-interface AdminData {
-  counts: { products: number; posts: number; clicks: number; revenue: number };
-  products: Array<{ id: string; name: string; category: string; created_at: string }>;
-  posts: Array<{ id: string; title: string; slug: string; status: string; created_at: string }>;
-}
+import { useEffect, useState } from "react";
+import Navbar from "../Navbar";
 
 export default function AdminPage() {
-  const [data, setData] = useState<AdminData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [leads, setLeads] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [chatSessions, setChatSessions] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'leads' | 'tickets' | 'chats'>('leads');
 
   useEffect(() => {
-    fetch("/api/admin/data")
-      .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); })
-      .catch(() => setLoading(false));
+    fetch('/api/leads').then(r => r.json()).then(d => setLeads(d.leads || []));
+    fetch('/api/tickets').then(r => r.json()).then(d => setTickets(d.tickets || []));
   }, []);
 
-  const formatDate = (d: string) => new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-
-  if (loading) return <Loading text="Loading admin data..." />;
-
   return (
-    <div className="pro-page-container">
-      <div className="pro-content-wrapper">
-        <div className="pro-section-header">
-          <div>
-            <h1 className="pro-section-title">Admin Dashboard</h1>
-            <p className="text-[#94a3b8] mt-1">Manage your platform</p>
-          </div>
-          <div className="flex gap-3">
-            <Link href="/admin/ads" className="pro-btn-outline">📢 Ads</Link>
-            <Link href="/products" className="pro-btn">+ Product</Link>
-            <Link href="/blog/new" className="pro-btn-outline">+ Post</Link>
-          </div>
+    <div className="min-h-screen bg-gray-950 text-white">
+      <Navbar />
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">🛠️ Admin Panel</h1>
+        
+        <div className="flex gap-4 mb-6">
+          <button 
+            onClick={() => setActiveTab('leads')}
+            className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'leads' ? 'bg-blue-600' : 'bg-gray-800'}`}
+          >
+            📧 Leads ({leads.length})
+          </button>
+          <button 
+            onClick={() => setActiveTab('tickets')}
+            className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'tickets' ? 'bg-blue-600' : 'bg-gray-800'}`}
+          >
+            🎫 Tickets ({tickets.length})
+          </button>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {[
-            { label: "Products", value: data?.counts?.products ?? 0, color: "#d4a574", icon: "🛍️" },
-            { label: "Blog Posts", value: data?.counts?.posts ?? 0, color: "#5eead4", icon: "📝" },
-            { label: "Total Clicks", value: data?.counts?.clicks ?? 0, color: "#94a3b8", icon: "🖱️" },
-            { label: "Revenue", value: `$${data?.counts?.revenue ?? 0}`, color: "#d4a574", icon: "💰" },
-          ].map((stat) => (
-            <div key={stat.label} className="pro-card p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-[#94a3b8] uppercase tracking-wider">{stat.label}</span>
-                <span className="text-xl">{stat.icon}</span>
-              </div>
-              <div className="text-2xl md:text-3xl font-bold" style={{ color: stat.color }}>{stat.value}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="pro-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-[#f8fafc]">Recent Products</h2>
-              <Link href="/products" className="pro-link text-sm">View all →</Link>
-            </div>
-            {(data?.products?.length ?? 0) === 0 ? (
-              <div className="pro-empty-state py-6"><p>No products</p></div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {data?.products?.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between p-3 bg-[#0f172a]/50 rounded-lg">
-                    <div>
-                      <div className="font-medium text-[#f8fafc]">{p.name}</div>
-                      <div className="text-xs text-[#64748b]">{p.category}</div>
-                    </div>
-                    <div className="text-xs text-[#64748b]">{formatDate(p.created_at)}</div>
-                  </div>
+        {activeTab === 'leads' && (
+          <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-800">
+                <tr>
+                  <th className="p-3 text-left text-sm">Email</th>
+                  <th className="p-3 text-left text-sm">Name</th>
+                  <th className="p-3 text-left text-sm">Interest</th>
+                  <th className="p-3 text-left text-sm">Date</th>
+                  <th className="p-3 text-left text-sm">Converted</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leads.map(lead => (
+                  <tr key={lead.id} className="border-t border-gray-800">
+                    <td className="p-3 text-sm">{lead.email}</td>
+                    <td className="p-3 text-sm">{lead.name || '-'}</td>
+                    <td className="p-3 text-sm">{lead.interest || '-'}</td>
+                    <td className="p-3 text-sm">{new Date(lead.created_at).toLocaleDateString()}</td>
+                    <td className="p-3 text-sm">{lead.converted ? '✅' : '❌'}</td>
+                  </tr>
                 ))}
-              </div>
-            )}
+              </tbody>
+            </table>
           </div>
+        )}
 
-          <div className="pro-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-[#f8fafc]">Recent Posts</h2>
-              <Link href="/blog" className="pro-link text-sm">View all →</Link>
-            </div>
-            {(data?.posts?.length ?? 0) === 0 ? (
-              <div className="pro-empty-state py-6"><p>No posts</p></div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {data?.posts?.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between p-3 bg-[#0f172a]/50 rounded-lg">
-                    <div>
-                      <div className="font-medium text-[#f8fafc]">{p.title}</div>
-                      <span className={`pro-badge text-xs mt-1 inline-block ${p.status === "published" ? "pro-badge-success" : "pro-badge-warning"}`}>{p.status}</span>
-                    </div>
-                    <div className="text-xs text-[#64748b]">{formatDate(p.created_at)}</div>
+        {activeTab === 'tickets' && (
+          <div className="space-y-4">
+            {tickets.map(ticket => (
+              <div key={ticket.id} className="p-4 bg-gray-900 rounded-xl border border-gray-800">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="font-bold">{ticket.subject}</h3>
+                    <p className="text-sm text-gray-400">{ticket.email}</p>
                   </div>
-                ))}
+                  <span className={`px-2 py-1 rounded text-xs ${
+                    ticket.status === 'open' ? 'bg-red-600' :
+                    ticket.status === 'in_progress' ? 'bg-yellow-600' :
+                    ticket.status === 'resolved' ? 'bg-green-600' : 'bg-gray-600'
+                  }`}>
+                    {ticket.status}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-300 mb-2">{ticket.message}</p>
+                <div className="flex gap-2">
+                  <button onClick={async () => {
+                    await fetch('/api/tickets', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ticket.id, status: 'in_progress' }) });
+                    window.location.reload();
+                  }} className="px-3 py-1 bg-yellow-600 rounded text-xs">Mark In Progress</button>
+                  <button onClick={async () => {
+                    await fetch('/api/tickets', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ticket.id, status: 'resolved' }) });
+                    window.location.reload();
+                  }} className="px-3 py-1 bg-green-600 rounded text-xs">Resolve</button>
+                </div>
               </div>
-            )}
+            ))}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
