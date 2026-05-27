@@ -29,7 +29,8 @@ export async function POST(req: Request) {
     const { message, sessionToken, userId } = await req.json();
     
     // Get or create session
-    let sessionId: string;
+    let sessionId: string | undefined = undefined;
+    
     if (sessionToken) {
       const { data: existing } = await supabase
         .from('chat_sessions')
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
         .insert({ user_id: userId || null, session_token: crypto.randomUUID() })
         .select()
         .single();
-      sessionId = newSession.id;
+      sessionId = newSession!.id;
     }
 
     // Get conversation history
@@ -58,25 +59,20 @@ export async function POST(req: Request) {
 
     // Build messages for OpenAI
     const messages = [
-      { role: 'system', content: SYSTEM_PROMPT },
-      ...(history || []).map(h => ({ role: h.role, content: h.content })),
-      { role: 'user', content: message }
+      { role: 'system' as const, content: SYSTEM_PROMPT },
+      ...(history || []).map(h => ({ role: h.role as 'user' | 'assistant', content: h.content })),
+      { role: 'user' as const, content: message }
     ];
 
-    // Detect intent and handle special actions
+    // Detect intent
     const lowerMsg = message.toLowerCase();
     let specialAction = null;
 
-    // Referral request
     if (lowerMsg.includes('referral') && lowerMsg.includes('link')) {
       specialAction = { type: 'referral', data: null };
-    }
-    // Support ticket
-    else if (lowerMsg.includes('bug') || lowerMsg.includes('issue') || lowerMsg.includes('problem')) {
+    } else if (lowerMsg.includes('bug') || lowerMsg.includes('issue') || lowerMsg.includes('problem')) {
       specialAction = { type: 'support', data: null };
-    }
-    // Lead capture
-    else if (lowerMsg.includes('email') && (lowerMsg.includes('subscribe') || lowerMsg.includes('newsletter'))) {
+    } else if (lowerMsg.includes('email') && (lowerMsg.includes('subscribe') || lowerMsg.includes('newsletter'))) {
       specialAction = { type: 'lead', data: null };
     }
 
@@ -88,7 +84,7 @@ export async function POST(req: Request) {
       max_tokens: 500,
     });
 
-    const reply = completion.choices[0].message.content;
+    const reply = completion.choices[0].message.content || 'I apologize, I could not generate a response.';
 
     // Store messages
     await supabase.from('chat_messages').insert([
@@ -96,9 +92,16 @@ export async function POST(req: Request) {
       { session_id: sessionId, role: 'assistant', content: reply, metadata: specialAction || {} }
     ]);
 
+    // Get the session token to return
+    const { data: sessionData } = await supabase
+      .from('chat_sessions')
+      .select('session_token')
+      .eq('id', sessionId)
+      .single();
+
     return NextResponse.json({
       reply,
-      sessionToken: sessionToken || (await supabase.from('chat_sessions').select('session_token').eq('id', sessionId).single()).data?.session_token,
+      sessionToken: sessionToken || sessionData?.session_token,
       action: specialAction
     });
 
